@@ -23,7 +23,7 @@ def select_new_city(state, origin, destination):  # evaluation function
     for c in state.connection.keys():
         if c not in state.path and c in state.connection[origin]:
             g = state.cost
-            h = distance(state.coordinates[c], state.coordinates[destination])
+            h = distance(state.cities[c], state.cities[destination])
             if g + h < best:
                 best_city = c
                 best = g + h
@@ -35,42 +35,74 @@ def select_new_city(state, origin, destination):  # evaluation function
 #---------- OPERATORS --------------
 
 # Move Truck operator
-def travel_op(state, destination, truck):
+def move_to_city_op(state, destination, truck):
     origin = state.trucks[truck]['location']
-    d = distance(state.coordinates[origin], state.coordinates[destination])
+    d = distance(state.cities[origin], state.cities[destination])
     driver = driver_in_truck(state, truck)
     if destination in state.connection[origin] and driver != None:
         state.trucks[truck]['location'] = destination
         state.path.append(destination)
-        state.cost += d
         return state
     return False
     
 # Load package in truck
 def load_truck_op(state, package, truck):
-
     return False
 
-#---------- ACTIONS ----------
+pyhop.declare_operators(move_to_city_op)
+print()
+pyhop.print_operators()
+
+#---------- METHODS ----------
+
+# Mover camion 
+def move_to_city_m(state, goal, truck):
+    origin = state.trucks[truck]['location']
+    destination = goal.loc[truck]
+    if origin != destination:
+        city = select_new_city(state,origin,destination)
+        return [('move_to_city_op', city, truck), ('move_to_city', goal, truck)]
+    return False
+
+def already_there(state, goal, truck):
+    origin = state.trucks[truck]['location']
+    destination = goal.loc[truck]
+    if origin == destination:
+        return []
+    return False
+
+pyhop.declare_methods('move_to_city', move_to_city_m, already_there)
+
+#---------- TASKS -------------
+
+def relocate_trucks (state, goal ): 
+    trucks = goal.loc.keys()
+    for t in trucks: 
+        origin = state.trucks[t]['location']
+        destination = goal.loc[t]
+        if origin != destination:
+            return [('move_to_city', goal, t), ('relocate', goal)]
+    return []
+    
+pyhop.declare_methods('relocate', relocate_trucks)
 
 # Tranportar un paquete en un camion
 def transport_by_truck(state, goal):
-    packages = goal.keys()
+    packages = goal.loc.keys()
     operations = []
     truck = 'T1'
-    
-    # buscar paquetes que no estan en el destino
-    for idx,package in packages:
-        origin = state.packages[package]['location']
-        destination = goal.loc[package]
-        if origin == destination:
-            packages.pop(idx)
     
     # si hay packetes que no estan en su destino
     if len(packages) > 0:
         # Primero cargamos todos los paquetes
         for p in packages:
-            operations.append[('load_truck_op', p, truck)] # Cargar el paquete en el camion, checar si hay packetes que entregar en esa ciudad
+            origin = state.packages[p]['location']
+            destination = goal.loc[p]
+            # buscar paquetes que no estan en el destino
+            if origin == destination:
+                packages.remove(p)
+            else: 
+                operations.append[('load_truck_op', p, truck)] # Cargar el paquete en el camion, checar si hay packetes que entregar en esa ciudad
         # Luego los repartimos
         for p in packages:
             operations.append[('transport_to_city', goal[p], truck)] # Mover el camion a la otra ciudad
@@ -105,7 +137,7 @@ state1.connectionPoints = {'P_01': {'C0','C1'},'P_12': {'C1','C2'}}
 
 # PARA PROBAR EL MOVIMIENTO DEL CAMION VAMOS A PONER UN CONDUCTOR DENTRO
 state1.drivers = {'D1': {'location': 'P_01'},'D2': {'location': 'T1'}}
-state1.packages = {'P1': {'location': 'C0', 'weight': 15},'D2': {'location': 'C0','weight': 50}}
+state1.packages = {'P1': {'location': 'C0', 'weight': 15},'P2': {'location': 'C0','weight': 50}}
 state1.trucks = {'T1': {'capacity': 100, 'location': 'C1'}, 'T2': {'capacity': 500, 'location': 'C0'}}
 
 state1.path = ['C1']
@@ -128,4 +160,5 @@ goal_drivers.loc = {'D1': 'C0'}
 # print('- If verbose=3, Pyhop also prints the intermediate states:')
 
 # call to the planner
-result = pyhop.pyhop(state1, [('transport', goal_packages)], verbose=3)
+# result = pyhop.pyhop(state1, [('transport', goal_packages)], verbose=3)
+result = pyhop.pyhop(state1, [('relocate', goal_trucks)], verbose=3)
