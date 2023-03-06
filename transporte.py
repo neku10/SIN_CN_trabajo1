@@ -56,9 +56,9 @@ def select_driver(state, truck):  # evaluation function
     coordenates = {}
     coordenates.update(state.cities)
     coordenates.update(state.points)
-
+    closest_driver = None
     for driver in state.drivers.keys():
-        if driver[0] != 'T':
+        if state.drivers[driver]['location'][0] != 'T':
             dist = distance(coordenates[state.drivers[driver]['location']], state.cities[state.trucks[truck]['location']])
             if dist < best:
                 closest_driver = driver
@@ -158,6 +158,8 @@ def move_to_city_m(state, goal, truck):
         driver = driver_in_truck(state, truck)
         if driver == None :
             driver = select_driver(state,truck)
+            if driver == None:
+                return False
             g = pyhop.Goal("d")
             g.loc = {}
             g.loc[driver] = origin
@@ -200,6 +202,17 @@ def relocate_trucks_m (state, goal ):
     
 pyhop.declare_methods('relocate_trucks', relocate_trucks_m)
 
+def transport_packages_m (state, goal) :
+    packages = goal.loc.keys()
+    for p in packages:
+        origin = state.packages[p]['location']
+        destination = goal.loc[p]
+        if origin != destination:
+            return [('move_to_city', goal, t), ('relocate_trucks', goal)]
+    return []
+
+pyhop.declare_methods('transport_packages', transport_packages_m)
+
 # Tranportar un paquete en un camion
 def transport_by_truck(state, goal):
     packages = goal.loc.keys()
@@ -224,18 +237,7 @@ def transport_by_truck(state, goal):
         return operations
     return False
 
-#def transport_by_truck_c0(state, goal):
-#    return transport_by_truck(state, goal, 'c0')
-#
-#def transport_by_truck_c1(state, goal):
-#    return transport_by_truck(state, goal, 'c1')
-#
-#
-#def transport_by_truck_c2(state, goal):
-#    return transport_by_truck(state, goal, 'c2')
-
 pyhop.declare_methods('transport', transport_by_truck)
-#pyhop.declare_methods('transport', transport_by_truck_c0, transport_by_truck_c1, transport_by_truck_c2)
 print()
 pyhop.print_methods()
 
@@ -265,7 +267,7 @@ goal_drivers = pyhop.Goal('goal_drivers')
 
 # Definicion del objetivo
 goal_packages.loc = {'P1': 'C1', 'P2': 'C2'}
-goal_trucks.loc = {'T1': 'C0'}
+goal_trucks.loc = {'T1': 'C0', 'T2': 'C2'}
 goal_drivers.loc = {'D1': 'C2'}
 #goal1 = pyhop.Goal('goal1')
 
@@ -273,4 +275,5 @@ goal_drivers.loc = {'D1': 'C2'}
 
 # call to the planner
 # result = pyhop.pyhop(state1, [('transport', goal_packages)], verbose=3)
+#result = pyhop.pyhop(state1, [('transport_packages', goal_packages), ('relocate_trucks', goal_trucks), ('relocate_drivers', goal_drivers)], verbose=3)
 result = pyhop.pyhop(state1, [('relocate_trucks', goal_trucks), ('relocate_drivers', goal_drivers)], verbose=3)
