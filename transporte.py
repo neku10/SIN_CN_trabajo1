@@ -268,7 +268,7 @@ goal_drivers = pyhop.Goal('goal_drivers')
 # Definicion del objetivo
 goal_packages.loc = {'P1': 'C1', 'P2': 'C2'}
 goal_trucks.loc = {'T1': 'C0', 'T2': 'C2'}
-goal_drivers.loc = {'D1': 'C2'}
+goal_drivers.loc = {'D1': 'C2', 'D2': 'P_01'}
 #goal1 = pyhop.Goal('goal1')
 
 # print('- If verbose=3, Pyhop also prints the intermediate states:')
