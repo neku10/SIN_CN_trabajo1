@@ -97,7 +97,7 @@ def load_driver_op(state, driver, truck):
 def load_package_op(state, package, truck):
     return False
 
-pyhop.declare_operators(move_to_city_op, take_bus_op, walk_op)
+pyhop.declare_operators(move_to_city_op, load_driver_op, take_bus_op, walk_op)
 print()
 pyhop.print_operators()
 
@@ -125,7 +125,7 @@ def move_driver_m(state, goal, driver):
     destination = goal.loc[driver]
     if origin != destination:
         location = select_new_location(state,origin,destination)
-        return [('move_driver_to_location', driver, location), ('move_driver', goal, location)]
+        return [('move_driver_to_location', driver, location), ('move_driver', goal, driver)]
     return False
 
 def already_there_d(state, goal, driver):
@@ -149,7 +149,7 @@ def move_to_city_m(state, goal, truck):
             g = pyhop.Goal("d")
             g.loc = {}
             g.loc[driver] = origin
-            return [('move_driver', g, driver), ('load_driver_op', driver, truck ),('move_to_city_op', city, truck), ('move_to_city', goal, truck)]    
+            return [('move_driver', g, driver), ('load_driver_op', driver, truck ),('move_to_city', goal, truck)]    
         return [('move_to_city_op', city, truck), ('move_to_city', goal, truck)]
     return False
 
