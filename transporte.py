@@ -275,5 +275,4 @@ goal_drivers.loc = {'D1': 'C2', 'D2': 'P_01'}
 
 # call to the planner
 # result = pyhop.pyhop(state1, [('transport', goal_packages)], verbose=3)
-#result = pyhop.pyhop(state1, [('transport_packages', goal_packages), ('relocate_trucks', goal_trucks), ('relocate_drivers', goal_drivers)], verbose=3)
-result = pyhop.pyhop(state1, [('relocate_trucks', goal_trucks), ('relocate_drivers', goal_drivers)], verbose=3)
+result = pyhop.pyhop(state1, [('transport_packages', goal_packages), ('relocate_trucks', goal_trucks), ('relocate_drivers', goal_drivers)], verbose=3)
