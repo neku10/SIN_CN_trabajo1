@@ -154,6 +154,7 @@ def load_package_op(state, package, truck):
 def unload_package_op(state, package, truck):
     if state.packages[package]['location'] == truck:
         state.packages[package]['location'] = state.trucks[truck]['location']
+        state.trucks[truck]['path'] = nextPath(state.trucks[truck]['path'], 'done')
         return state
     return False
 
@@ -305,17 +306,30 @@ pyhop.print_methods()
 #---------- INITIAL STATE ----------
 
 state1 = pyhop.State('state1')
-state1.cities = {'C0': {'X': 30, 'Y': 255}, 'C1': {'X': 190, 'Y': 70}, 'C2': {'X': 230, 'Y': 340}}
-state1.connection = {'C0': {'C1','C2'}, 'C1': {'C0', 'C2'}, 'C2': {'C0', 'C1'}}
-state1.points = {'P_01': {'X': 50, 'Y': 150}, 'P_12': {'X': 200, 'Y': 210}}
-state1.connection_points = {'P_01': {'C0','C1'},'P_12': {'C1','C2'}, 'C0': {'P_01'}, 'C1': {'P_01', 'P_12'}, 'C2': {'P_12'}}
+state1.cities = {'C0': {'X': 30, 'Y': 255}, 'C1': {'X': 190, 'Y': 70}, 'C2': {'X': 230, 'Y': 340},
+                 'C3': {'X': 48, 'Y': 25}, 'C4': {'X': 10, 'Y': 0}, 'C5': {'X': 115, 'Y': 180},
+                 'C6': {'X': 300, 'Y': 51}, 'C7': {'X': 250, 'Y': 267}, 'C8': {'X': 27, 'Y': 132}}
+state1.connection = {'C0': {'C1','C2','C5','C7','C8'}, 'C1': {'C0','C2','C3','C5','C6'}, 'C2': {'C0', 'C1','C5','C7'},
+                     'C3': {'C1','C4','C6','C8'},'C4': {'C3'},'C5': {'C0','C1','C2','C7','C8'},'C6': {'C1','C3','C7'},
+                     'C7': {'C0','C2','C5','C6'}, 'C8': {'C0','C3','C5'}}
+state1.points = {'P_01': {'X': 50, 'Y': 150},'P_08': {'X': 18, 'Y': 186},'P_12': {'X': 200, 'Y': 210},
+                 'P_13': {'X': 119, 'Y': 64},'P_15': {'X': 147, 'Y': 122},'P_16': {'X': 250, 'Y': 78},
+                 'P_27': {'X': 271, 'Y': 313},'P_34': {'X': 18, 'Y': 33},'P_48': {'X': 19, 'Y': 88},
+                 'P_67': {'X': 345, 'Y': 211}}
+state1.connection_points = {'P_01': {'C0','C1'},'P_08': {'C0','C8'},'P_12': {'C1','C2'},'P_13': {'C1','C3'},
+                            'P_15': {'C1','C5'},'P_16': {'C1','C6'},'P_27': {'C2','C7'},'P_34': {'C3','C4'},
+                            'P_48': {'C4','C8'},'P_67': {'C6','C7'},'C0': {'P_01','P_08'},
+                            'C1': {'P_01', 'P_12','P_13','P_15','P_16'}, 'C2': {'P_12','P_27'},'C3': {'P_13', 'P_34'},
+                            'C4': {'P_34', 'P_48'},'C5': {'P_15'},'C6': {'P_16', 'P_67'},'C7': {'P_27', 'P_67'},
+                            'C8': {'P_08', 'P_48'}}
 
 # PARA PROBAR EL MOVIMIENTO DEL CAMION VAMOS A PONER UN CONDUCTOR DENTRO
 state1.drivers = {'D1': {'location': 'P_01', 'path':['P_01']},'D2': {'location': 'C2', 'path':['C2']},
                   'D3': {'location': 'P_01', 'path':['P_01']},'D4': {'location': 'P_12', 'path':['P_12']}}
 #state1.drivers = {'D1': {'location': 'P_01', 'path':['P_01']}}
-state1.packages = {'P1': {'location': 'C0', 'weight': 15},'P2': {'location': 'C0','weight': 50}}
-state1.trucks = {'T1': {'capacity': 100, 'location': 'C1', 'path':['C1']}, 'T2': {'capacity': 500, 'location': 'C0', 'path':['C0']},
+state1.packages = {'P1': {'location': 'C0', 'weight': 15},'P2': {'location': 'C0','weight': 50},
+                   'P3': {'location': 'C6', 'weight': 15},'P4': {'location': 'C7','weight': 50}}
+state1.trucks = {'T1': {'capacity': 100, 'location': 'C1', 'path':['C1']}, 'T2': {'capacity': 500, 'location': 'C4', 'path':['C4']},
                  'T3': {'capacity': 100, 'location': 'C2', 'path':['C2']}, 'T4': {'capacity': 500, 'location': 'C0', 'path':['C0']}}
 #state1.trucks = {'T1': {'capacity': 100, 'location': 'C1', 'path':['C1']}}
 
@@ -331,8 +345,8 @@ goal_drivers = pyhop.Goal('goal_drivers')
 #goal1.final = 'C0'
 
 # Definicion del objetivo
-goal_packages.loc = {'P1': 'C1', 'P2': 'C2'}
-goal_trucks.loc = {'T1': 'C0', 'T2': 'C2', 'T3': 'C1'}
+goal_packages.loc = {'P1': 'C6', 'P2': 'C4','P3': 'C6', 'P4': 'C3'}
+goal_trucks.loc = {'T1': 'C0', 'T2': 'C2', 'T3': 'C8'}
 goal_drivers.loc = {'D1': 'C2', 'D2': 'P_12'}
 #goal1 = pyhop.Goal('goal1')
 
