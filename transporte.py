@@ -4,6 +4,10 @@ import pyhop
 
 #---------- EXTRA FUNCTIONS ----------
 
+# Bus Rate
+def bus_rate(dist):
+    return 0.4 + 0.05 * dist
+
 # Change path to next route
 def nextPath(paths, text):
     return [text + "-" + path for path in paths]
@@ -119,9 +123,10 @@ def walk_op(state, driver, destination):
     return state
 
 # take bus
-def take_bus_op(state, driver, destination): 
+def take_bus_op(state, driver, destination, rate):
     state.drivers[driver]['location'] = destination
     state.drivers[driver]['path'].append(destination)
+    state.drivers[driver]['cash'] = round(state.drivers[driver]['cash'] - rate,2)
     return state
 
 def load_driver_op(state, driver, truck):
@@ -164,21 +169,22 @@ pyhop.print_operators()
 
 #---------- METHODS ----------
 
-def move_by_foot(state, driver, destination):
+def move_by_bus(state, driver, destination):
     coordenates = {}
     coordenates.update(state.cities)
     coordenates.update(state.points)
     driver_loc = coordenates[state.drivers[driver]['location']]
     driver_destination = coordenates[destination]
     dist = distance(driver_loc, driver_destination)
-    if dist < 100:
-        return [('walk_op', driver, destination)]
+    rate = bus_rate(dist)
+    if rate <= state.drivers[driver]['cash'] and dist > 100:
+        return [('take_bus_op', driver, destination, rate)]
     return False
 
-def move_by_bus(state, driver, destination):
-    return [('take_bus_op', driver, destination)]
+def move_by_foot(state, driver, destination):
+    return [('walk_op', driver, destination)]
 
-pyhop.declare_methods('move_driver_to_location', move_by_foot, move_by_bus)
+pyhop.declare_methods('move_driver_to_location', move_by_bus, move_by_foot)
 
 # Mover camion 
 def move_driver_m(state, goal, driver):
@@ -324,8 +330,8 @@ state1.connection_points = {'P_01': {'C0','C1'},'P_08': {'C0','C8'},'P_12': {'C1
                             'C8': {'P_08', 'P_48'}}
 
 # PARA PROBAR EL MOVIMIENTO DEL CAMION VAMOS A PONER UN CONDUCTOR DENTRO
-state1.drivers = {'D1': {'location': 'P_01', 'path':['P_01']},'D2': {'location': 'C2', 'path':['C2']},
-                  'D3': {'location': 'P_01', 'path':['P_01']},'D4': {'location': 'P_12', 'path':['P_12']}}
+state1.drivers = {'D1': {'location': 'P_01', 'path':['P_01'], 'cash':50},'D2': {'location': 'C2', 'path':['C2'], 'cash':4000},
+                  'D3': {'location': 'P_01', 'path':['P_01'], 'cash':30},'D4': {'location': 'P_12', 'path':['P_12'], 'cash':0}}
 #state1.drivers = {'D1': {'location': 'P_01', 'path':['P_01']}}
 state1.packages = {'P1': {'location': 'C0', 'weight': 15},'P2': {'location': 'C0','weight': 50},
                    'P3': {'location': 'C6', 'weight': 15},'P4': {'location': 'C7','weight': 50}}
