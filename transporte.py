@@ -30,11 +30,10 @@ def select_new_city(state, origin, destination, truck):  # evaluation function
     best = inf  # big float
     for c in state.connection.keys():
         if c not in state.trucks[truck]['path'] and c in state.connection[origin]:
-            g = state.cost
             h = distance(state.cities[c], state.cities[destination])
-            if g + h < best:
+            if  h < best:
                 best_city = c
-                best = g + h
+                best = h
     return best_city
 
 def select_new_location(state, origin, destination, driver): 
@@ -330,7 +329,7 @@ state1.connection_points = {'P_01': {'C0','C1'},'P_08': {'C0','C8'},'P_12': {'C1
                             'C8': {'P_08', 'P_48'}}
 
 # PARA PROBAR EL MOVIMIENTO DEL CAMION VAMOS A PONER UN CONDUCTOR DENTRO
-state1.drivers = {'D1': {'location': 'P_01', 'path':['P_01'], 'cash':50},'D2': {'location': 'C2', 'path':['C2'], 'cash':4000},
+state1.drivers = {'D1': {'location': 'P_01', 'path':['P_01'], 'cash':50},'D2': {'location': 'C2', 'path':['C2'], 'cash':400},
                   'D3': {'location': 'P_01', 'path':['P_01'], 'cash':30},'D4': {'location': 'P_12', 'path':['P_12'], 'cash':0}}
 #state1.drivers = {'D1': {'location': 'P_01', 'path':['P_01']}}
 state1.packages = {'P1': {'location': 'C0', 'weight': 15},'P2': {'location': 'C0','weight': 50},
@@ -339,7 +338,6 @@ state1.trucks = {'T1': {'capacity': 100, 'location': 'C1', 'path':['C1']}, 'T2':
                  'T3': {'capacity': 100, 'location': 'C2', 'path':['C2']}, 'T4': {'capacity': 500, 'location': 'C0', 'path':['C0']}}
 #state1.trucks = {'T1': {'capacity': 100, 'location': 'C1', 'path':['C1']}}
 
-state1.cost = 0
 state1.closest_truck = []
 
 
