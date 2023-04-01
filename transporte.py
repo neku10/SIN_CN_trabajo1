@@ -122,11 +122,14 @@ def walk_op(state, driver, destination):
     return state
 
 # take bus
-def take_bus_op(state, driver, destination, rate):
-    state.drivers[driver]['location'] = destination
-    state.drivers[driver]['path'].append(destination)
-    state.drivers[driver]['cash'] = round(state.drivers[driver]['cash'] - rate,2)
-    return state
+def take_bus_op(state, driver, destination, distance):
+    rate = bus_rate(distance)
+    if (rate <= state.drivers[driver]['cash']):
+        state.drivers[driver]['location'] = destination
+        state.drivers[driver]['path'].append(destination)
+        state.drivers[driver]['cash'] = round(state.drivers[driver]['cash'] - rate,2)
+        return state
+    return False
 
 def load_driver_op(state, driver, truck):
     if state.drivers[driver]['location'] == state.trucks[truck]['location']:
@@ -175,9 +178,8 @@ def move_by_bus(state, driver, destination):
     driver_loc = coordenates[state.drivers[driver]['location']]
     driver_destination = coordenates[destination]
     dist = distance(driver_loc, driver_destination)
-    rate = bus_rate(dist)
-    if rate <= state.drivers[driver]['cash'] and dist > 100:
-        return [('take_bus_op', driver, destination, rate)]
+    if dist > 100:
+        return [('take_bus_op', driver, destination, dist)]
     return False
 
 def move_by_foot(state, driver, destination):
@@ -186,19 +188,17 @@ def move_by_foot(state, driver, destination):
 pyhop.declare_methods('move_driver_to_location', move_by_bus, move_by_foot)
 
 # Mover camion 
-def move_driver_m(state, goal, driver):
+def move_driver_m(state, destination, driver):
     origin = state.drivers[driver]['location']
-    destination = goal.loc[driver]
     if origin != destination:
         if origin[0] == 'T' :
-            return [('unload_driver_op', driver, origin), ('move_driver', goal, driver)]
+            return [('unload_driver_op', driver, origin), ('move_driver', destination, driver)]
         location = select_new_location(state,origin,destination, driver)
-        return [('move_driver_to_location', driver, location), ('move_driver', goal, driver)]
+        return [('move_driver_to_location', driver, location), ('move_driver', destination, driver)]
     return False
 
-def already_there_d(state, goal, driver):
+def already_there_d(state, destination, driver):
     origin = state.drivers[driver]['location']
-    destination = goal.loc[driver]
     if origin == destination:
         return []
     return False
@@ -206,26 +206,21 @@ def already_there_d(state, goal, driver):
 pyhop.declare_methods('move_driver', move_driver_m, already_there_d)
 
 # Mover camion 
-def move_to_city_m(state, goal, truck):
+def move_to_city_m(state, destination, truck):
     origin = state.trucks[truck]['location']
-    destination = goal.loc[truck]
     if origin != destination:
-        city = select_new_city(state,origin,destination, truck)
         driver = driver_in_truck(state, truck)
         if driver == None :
             driver = select_driver(state,truck)
             if driver == None:
                 return False
-            g = pyhop.Goal("d")
-            g.loc = {}
-            g.loc[driver] = origin
-            return [('move_driver', g, driver), ('load_driver_op', driver, truck ),('move_to_city', goal, truck)]    
-        return [('move_to_city_op', city, truck), ('move_to_city', goal, truck)]
+            return [('move_driver', origin, driver), ('load_driver_op', driver, truck ),('move_to_city', destination, truck)]    
+        city = select_new_city(state,origin,destination, truck)
+        return [('move_to_city_op', city, truck), ('move_to_city', destination, truck)]
     return False
 
-def already_there(state, goal, truck):
+def already_there(state, destination, truck):
     origin = state.trucks[truck]['location']
-    destination = goal.loc[truck]
     if origin == destination:
         return []
     return False
@@ -240,7 +235,7 @@ def relocate_drivers_m (state, goal ):
         origin = state.drivers[d]['location']
         destination = goal.loc[d]
         if origin != destination:
-            return [('move_driver', goal, d), ('relocate_drivers', goal)]
+            return [('move_driver', destination, d), ('relocate_drivers', goal)]
     return []
     
 pyhop.declare_methods('relocate_drivers', relocate_drivers_m)
@@ -252,7 +247,7 @@ def relocate_trucks_m (state, goal ):
         origin = state.trucks[t]['location']
         destination = goal.loc[t]
         if origin != destination:
-            return [('move_to_city', goal, t), ('relocate_trucks', goal)]
+            return [('move_to_city', destination, t), ('relocate_trucks', goal)]
     return []
     
 pyhop.declare_methods('relocate_trucks', relocate_trucks_m)
@@ -263,18 +258,12 @@ def transport_packages_m (state, goal) :
         origin = state.packages[p]['location']
         destination = goal.loc[p]
         if origin != destination:
-            if origin[0] != 'T' :
-                truck = select_truck(state, p)
-                g1 = pyhop.Goal('T')
-                g1.loc = {}
-                g1.loc[truck] = origin
+            truck = select_truck(state, p)
+            if origin != truck :
                 if select_driver(state,truck) != None:
-                    return [('move_to_city', g1, truck), ('load_package_op', p, truck), ('transport_packages', goal)  ]
+                    return [('move_to_city', origin, truck), ('load_package_op', p, truck), ('transport_packages', goal)  ]
                 return [('transport_packages', goal)  ]
-            g = pyhop.Goal('TP')
-            g.loc = {}
-            g.loc[origin] = destination
-            return [('move_to_city', g, origin), ('unload_package_op', p, origin), ('transport_packages', goal)]
+            return [('move_to_city', destination, truck), ('unload_package_op', p, truck), ('transport_packages', goal)]
     return []
 
 pyhop.declare_methods('transport_packages', transport_packages_m)
